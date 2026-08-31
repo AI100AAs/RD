@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Creation history | {{ app_name }}</title>
+    <meta name="theme-color" content="{{ theme_color }}">
+    <base href="{{ base_href }}">
+    <link rel="icon" href="{{ icon_url }}" sizes="192x192">
+    <link rel="stylesheet" href="{{ shared_asset_base }}base.css">
+    <link rel="stylesheet" href="{{ asset_base }}styles.css">
+  </head>
+  <body class="shell-body graphical-body history-body">
+    <div class="app-frame public-frame graphical-frame">
+      <header class="app-header"><a class="wordmark" href="{{ base_href }}"><span class="wordmark-dot"></span>roomform</a><a class="history-link" href="{{ base_href }}">Back to studio</a></header>
+      <main class="history-page" aria-labelledby="history-title">
+        <p class="eyebrow">YOUR ARCHIVE</p>
+        <h1 id="history-title">Creation history</h1>
+        <p class="intro-copy">A record of the room directions you've made in this app.</p>
+        <section id="history-grid" class="history-grid" aria-live="polite"><p class="history-empty">Loading your creations...</p></section>
+        <footer class="site-footer"><span>Sample project developed for <strong>UBC's AI 100: Introduction to Artificial Intelligence</strong>.</span><a href="https://www.cs.ubc.ca/~kevinlb/teaching/ai100/" target="_blank" rel="noreferrer">Visit the course page</a></footer>
+      </main>
+    </div>
+    <script id="gizmoapp-config" type="application/json">{{ client_config | tojson }}</script>
+    <script src="{{ shared_asset_base }}boot.js"></script>
+    <script type="module" src="{{ asset_base }}history.js"></script>
+  </body>
+</html>

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{{ app_name }}</title>
+    <meta name="description" content="{{ app_tagline }}">
+    <meta name="theme-color" content="{{ theme_color }}">
+    <base href="{{ base_href }}">
+    <link rel="icon" href="{{ icon_url }}" sizes="192x192">
+    <link rel="stylesheet" href="{{ shared_asset_base }}base.css">
+    <link rel="stylesheet" href="{{ asset_base }}styles.css">
+  </head>
+  <body class="shell-body graphical-body">
+    <div class="app-frame public-frame graphical-frame">
+      <header class="app-header">
+          <a class="wordmark" href="{{ base_href }}" aria-label="Roomform home"><span class="wordmark-dot"></span>roomform</a>
+          <div class="header-tools">
+            <span class="header-note">A clearer room, before you move a thing.</span>
+            <a class="history-link" href="{{ base_href }}history">History</a>
+          <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+            <span class="theme-toggle-icon" aria-hidden="true"></span>
+            <span class="theme-toggle-label">Dark mode</span>
+          </button>
+        </div>
+      </header>
+      <main class="room-app" aria-labelledby="page-title">
+        <section class="intro">
+          <p class="eyebrow">INTERIOR REIMAGINED</p>
+          <h1 id="page-title">See your room<br><em>in a new light.</em></h1>
+          <p class="intro-copy">Upload a photo, describe the feeling you want, and explore three considered directions.</p>
+        </section>
+
+        <section class="workflow-grid">
+          <form id="design-form" class="control-panel">
+            <div class="step-heading"><span>01</span><h2>Start with your space</h2></div>
+            <label class="upload-zone" id="upload-zone" for="room-photo">
+              <input id="room-photo" name="room-photo" type="file" accept="image/png,image/jpeg,image/webp" required>
+              <span class="upload-icon" aria-hidden="true">+</span>
+              <span class="upload-title" id="upload-title">Drop a room photo here</span>
+              <span class="upload-hint" id="upload-hint">PNG, JPG or WEBP - up to 10 MB</span>
+              <img id="photo-preview" alt="Room photo preview" hidden>
+            </label>
+
+            <div class="preset-heading">
+              <span class="field-label">Start with a preset</span>
+              <span class="preset-hint">Optional - mix with your own words</span>
+            </div>
+            <div class="preset-grid">
+              <label class="select-field" for="room-type">
+                <span>Room type</span>
+                <select id="room-type" name="room-type">
+                  <option value="">Choose a room</option>
+                  <option value="living room">Living room</option>
+                  <option value="bedroom">Bedroom</option>
+                  <option value="kitchen">Kitchen</option>
+                  <option value="home office">Home office</option>
+                  <option value="dining room">Dining room</option>
+                  <option value="entryway">Entryway</option>
+                  <option value="bathroom">Bathroom</option>
+                </select>
+              </label>
+              <label class="select-field" for="design-style">
+                <span>Design style</span>
+                <select id="design-style" name="design-style">
+                  <option value="">Choose a style</option>
+                  <option value="warm minimalist">Warm minimalist</option>
+                  <option value="Scandinavian">Scandinavian</option>
+                  <option value="Japandi">Japandi</option>
+                  <option value="mid-century modern">Mid-century modern</option>
+                  <option value="coastal">Coastal</option>
+                  <option value="industrial">Industrial</option>
+                  <option value="eclectic">Eclectic</option>
+                </select>
+              </label>
+              <label class="select-field" for="room-feeling">
+                <span>Feeling</span>
+                <select id="room-feeling" name="room-feeling">
+                  <option value="">Choose a feeling</option>
+                  <option value="calm and restful">Calm and restful</option>
+                  <option value="bright and airy">Bright and airy</option>
+                  <option value="cozy and layered">Cozy and layered</option>
+                  <option value="fresh and natural">Fresh and natural</option>
+                  <option value="bold and expressive">Bold and expressive</option>
+                  <option value="refined and elegant">Refined and elegant</option>
+                </select>
+              </label>
+            </div>
+            <label class="field-label" for="room-brief">What else would you like to change?</label>
+            <textarea id="room-brief" name="room-brief" rows="4" maxlength="1000" placeholder="More light, space for plants, linen textures, or anything else..."></textarea>
+            <button class="primary-button" id="refine-button" type="submit">Refine my direction <span aria-hidden="true">-&gt;</span></button>
+            <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+            <div class="progress-wrap" id="refine-progress" hidden>
+              <div class="progress-meta"><span id="refine-progress-label">Preparing</span><span id="refine-progress-percent">0%</span></div>
+              <div class="progress-track" role="progressbar" aria-label="Refining your room direction" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="progress-fill"></span></div>
+            </div>
+          </form>
+
+          <section class="approval-panel" id="approval-panel" aria-labelledby="approval-title" hidden>
+            <div class="step-heading"><span>02</span><h2 id="approval-title">Make it yours</h2></div>
+            <p class="panel-description">We shaped your idea into an image-ready direction. Read it over, edit anything you like, then approve it.</p>
+            <label class="field-label" for="refined-prompt">Your final direction</label>
+            <textarea id="refined-prompt" rows="8" maxlength="2000"></textarea>
+            <div class="approval-actions">
+              <button class="text-button" id="back-button" type="button">&lt;- Start over</button>
+              <button class="primary-button" id="generate-button" type="button">Show me three <span aria-hidden="true">-&gt;</span></button>
+            </div>
+            <p class="form-status" id="approval-status" role="status" aria-live="polite"></p>
+            <div class="progress-wrap" id="generate-progress" hidden>
+              <div class="progress-meta"><span id="generate-progress-label">Preparing</span><span id="generate-progress-percent">0%</span></div>
+              <div class="progress-track" role="progressbar" aria-label="Creating three room redesigns" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="progress-fill"></span></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="results-section" id="results-section" aria-labelledby="results-title" hidden>
+          <div class="results-heading"><div><p class="eyebrow">03 / YOUR POSSIBILITIES</p><h2 id="results-title">Three ways forward</h2></div><button class="text-button" id="new-design-button" type="button">Create another</button></div>
+          <div class="results-grid" id="results-grid"></div>
+        </section>
+        <footer class="site-footer">
+          <span>Sample project developed for <strong>UBC's AI 100: Introduction to Artificial Intelligence</strong>.</span>
+          <a href="https://www.cs.ubc.ca/~kevinlb/teaching/ai100/" target="_blank" rel="noreferrer">Visit the course page</a>
+        </footer>
+      </main>
+    </div>
+    <div id="app-error" class="app-error" role="alert" aria-live="assertive" hidden></div>
+
+    <script id="gizmoapp-config" type="application/json">{{ client_config | tojson }}</script>
+    <script src="{{ shared_asset_base }}boot.js"></script>
+    <script type="module" src="{{ asset_base }}main.js"></script>
+  </body>
+</html>
