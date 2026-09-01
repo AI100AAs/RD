@@ -22,13 +22,6 @@ function bootstrap() {
   let previewUrl = null;
 
   const themeToggle = document.getElementById("theme-toggle");
-  const savedTheme = (() => {
-    try {
-      return window.localStorage.getItem("roomform-theme");
-    } catch (error) {
-      return null;
-    }
-  })();
   const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
   const setTheme = (theme) => {
     document.documentElement.dataset.theme = theme;
@@ -37,15 +30,10 @@ function bootstrap() {
     themeToggle.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
     themeToggle.querySelector(".theme-toggle-label").textContent = dark ? "Light mode" : "Dark mode";
   };
-  setTheme(savedTheme === "dark" || savedTheme === "light" ? savedTheme : (prefersDark ? "dark" : "light"));
+  setTheme(prefersDark ? "dark" : "light");
   themeToggle.addEventListener("click", () => {
     const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
-    try {
-      window.localStorage.setItem("roomform-theme", nextTheme);
-    } catch (error) {
-      // The theme still works when preview storage is unavailable.
-    }
   });
 
   function selectedDirection() {
