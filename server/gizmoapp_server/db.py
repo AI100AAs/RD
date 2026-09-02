@@ -46,6 +46,11 @@ CREATE TABLE IF NOT EXISTS room_creations (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 """,
+    3: """
+ALTER TABLE room_creations ADD COLUMN owner_id TEXT NOT NULL DEFAULT '';
+CREATE INDEX IF NOT EXISTS room_creations_owner_id_idx
+    ON room_creations (owner_id, id DESC);
+""",
 }
 LATEST_SCHEMA_VERSION = max(SCHEMA_MIGRATIONS)
 BUSY_TIMEOUT_MS = 10_000
@@ -123,9 +128,14 @@ def initialize_database(config: dict) -> None:
                 option_number INTEGER NOT NULL,
                 content_type TEXT NOT NULL,
                 image_data TEXT NOT NULL,
+                owner_id TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
             """
+        )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS room_creations_owner_id_idx "
+            "ON room_creations (owner_id, id DESC)"
         )
         connection.commit()
     finally:
@@ -289,13 +299,14 @@ def insert_room_creation(
     option_number: int,
     content_type: str,
     image_data: str,
+    owner_id: str,
 ) -> dict[str, Any]:
     cursor = connection.execute(
         """
-        INSERT INTO room_creations (prompt, option_number, content_type, image_data)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO room_creations (prompt, option_number, content_type, image_data, owner_id)
+        VALUES (?, ?, ?, ?, ?)
         """,
-        (prompt, option_number, content_type, image_data),
+        (prompt, option_number, content_type, image_data, owner_id),
     )
     connection.commit()
     row = connection.execute(
@@ -308,12 +319,12 @@ def insert_room_creation(
     return dict(row)
 
 
-def fetch_room_creations(connection: sqlite3.Connection, limit: int = 100) -> list[dict[str, Any]]:
+def fetch_room_creations(connection: sqlite3.Connection, *, owner_id: str, limit: int = 100) -> list[dict[str, Any]]:
     rows = connection.execute(
         """
         SELECT id, prompt, option_number, content_type, image_data, created_at
-        FROM room_creations ORDER BY id DESC LIMIT ?
+        FROM room_creations WHERE owner_id = ? ORDER BY id DESC LIMIT ?
         """,
-        (limit,),
+        (owner_id, limit),
     ).fetchall()
     return [dict(row) for row in rows]

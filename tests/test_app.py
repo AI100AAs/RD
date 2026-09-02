@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from server.gizmoapp_server import create_app
+from server.gizmoapp_server.db import get_db, insert_room_creation
 
 
 ALL_FEATURES = frozenset(
@@ -53,7 +54,25 @@ class GizmoAppTestCase(unittest.TestCase):
         self.assertEqual(bootstrap.get_json()["app"]["shell"], "graphical")
         self.assertEqual(ready.status_code, 200)
         self.assertEqual(ready.get_json()["status"], "ready")
-        self.assertEqual(ready.get_json()["schemaVersion"], 2)
+        self.assertEqual(ready.get_json()["schemaVersion"], 3)
+
+    def test_room_history_is_scoped_to_platform_user(self):
+        app = self.make_app()
+        client = app.test_client()
+        with app.app_context():
+            insert_room_creation(
+                get_db(),
+                prompt="private room",
+                option_number=1,
+                content_type="image/png",
+                image_data="aW1hZ2U=",
+                owner_id="alice",
+            )
+
+        alice = client.get("/api/room/history", headers={"X-Gizmo-User-ID": "alice"})
+        bob = client.get("/api/room/history", headers={"X-Gizmo-User-ID": "bob"})
+        self.assertEqual(len(alice.get_json()["creations"]), 1)
+        self.assertEqual(bob.get_json()["creations"], [])
 
     def test_optional_routes_are_disabled_by_default(self):
         app = self.make_app(enabled_features=frozenset())

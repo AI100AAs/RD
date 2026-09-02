@@ -113,7 +113,10 @@ All endpoints respect `GIZMOAPP_URL_PREFIX` when it is configured.
 - `POST /api/room/generate` accepts an image, approved prompt, and optional
   `start_option`, then streams two sequential options through `progress`,
   `image`, `variation-error`, `done`, or `error` SSE events.
-- `GET /api/room/history` returns saved generated creations.
+- `GET /api/room/history` returns saved generated creations for the current
+  platform user. The server reads the hosting proxy's `X-Gizmo-User-ID` (or
+  compatible user identity header), so history does not depend on browser
+  storage or cookies.
 - `GET /healthz` reports process liveness.
 - `GET /readyz` checks SQLite readiness.
 - `GET /api/bootstrap` returns app metadata and runtime information.

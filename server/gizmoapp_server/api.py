@@ -37,6 +37,7 @@ MAX_LABEL_LENGTH = 120
 MAX_DESCRIPTION_LENGTH = 2_000
 MAX_SEARCH_QUERY_LENGTH = 200
 MAX_ROOM_OPTION = 99
+USER_ID_HEADERS = ("X-Gizmo-User-ID", "X-User-ID", "X-Forwarded-User")
 
 
 def _health_payload() -> dict[str, Any]:
@@ -44,6 +45,16 @@ def _health_payload() -> dict[str, Any]:
         "status": "ok",
         "serverTime": datetime.now(UTC).isoformat(),
     }
+
+
+def _current_user_id() -> str:
+    """Use the identity supplied by the hosting proxy, never browser state."""
+    for header in USER_ID_HEADERS:
+        value = request.headers.get(header, "").strip()
+        if value:
+            return value[:255]
+    remote_user = request.environ.get("REMOTE_USER", "").strip()
+    return remote_user[:255]
 
 
 def _bootstrap_payload() -> dict[str, Any]:
@@ -225,7 +236,7 @@ def register_api_routes(app: Flask) -> None:
 
     @app.get(scoped_path(prefix, "api/room/history"))
     def room_history():
-        return jsonify({"creations": fetch_room_creations(get_db())})
+        return jsonify({"creations": fetch_room_creations(get_db(), owner_id=_current_user_id())})
 
     @app.post(scoped_path(prefix, "api/room/generate"))
     def room_generate():
@@ -279,6 +290,7 @@ def register_api_routes(app: Flask) -> None:
                         option_number=option_number,
                         content_type=result.content_type,
                         image_data=encoded,
+                        owner_id=_current_user_id(),
                     )
                     completed += 1
                     yield f"event: image\ndata: {json.dumps({'option': option_number, 'contentType': result.content_type, 'data': encoded})}\n\n"
