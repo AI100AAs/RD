@@ -73,6 +73,25 @@ class GizmoAppTestCase(unittest.TestCase):
         bob = client.get("/api/room/history", headers={"X-Gizmo-User-ID": "bob"})
         self.assertEqual(len(alice.get_json()["creations"]), 1)
         self.assertEqual(bob.get_json()["creations"], [])
+        self.assertEqual(bob.headers["Cache-Control"], "no-store")
+
+    def test_room_history_does_not_share_anonymous_creations(self):
+        app = self.make_app()
+        client = app.test_client()
+        with app.app_context():
+            insert_room_creation(
+                get_db(),
+                prompt="anonymous room",
+                option_number=1,
+                content_type="image/png",
+                image_data="aW1hZ2U=",
+                owner_id="",
+            )
+
+        response = client.get("/api/room/history")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["creations"], [])
 
     def test_optional_routes_are_disabled_by_default(self):
         app = self.make_app(enabled_features=frozenset())

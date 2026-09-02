@@ -47,14 +47,14 @@ def _health_payload() -> dict[str, Any]:
     }
 
 
-def _current_user_id() -> str:
+def _current_user_id() -> str | None:
     """Use the identity supplied by the hosting proxy, never browser state."""
     for header in USER_ID_HEADERS:
         value = request.headers.get(header, "").strip()
         if value:
             return value[:255]
     remote_user = request.environ.get("REMOTE_USER", "").strip()
-    return remote_user[:255]
+    return remote_user[:255] or None
 
 
 def _bootstrap_payload() -> dict[str, Any]:
@@ -236,7 +236,11 @@ def register_api_routes(app: Flask) -> None:
 
     @app.get(scoped_path(prefix, "api/room/history"))
     def room_history():
-        return jsonify({"creations": fetch_room_creations(get_db(), owner_id=_current_user_id())})
+        owner_id = _current_user_id()
+        # Never let requests without a proxy identity share the legacy empty bucket.
+        response = jsonify({"creations": fetch_room_creations(get_db(), owner_id=owner_id) if owner_id else []})
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.post(scoped_path(prefix, "api/room/generate"))
     def room_generate():
@@ -258,6 +262,7 @@ def register_api_routes(app: Flask) -> None:
         image_data = photo.read()
         if not image_data or len(image_data) > 8 * 1024 * 1024:
             return _error_response("Photo must be smaller than 8 MB", 400)
+        owner_id = _current_user_id()
         def events():
             def render_variation(seed: int):
                 return edit_image(
@@ -284,14 +289,15 @@ def register_api_routes(app: Flask) -> None:
                     if result is None:
                         raise CourseMediaError("The course-media worker did not return an image.")
                     encoded = base64.b64encode(result.data).decode("ascii")
-                    insert_room_creation(
-                        get_db(),
-                        prompt=prompt,
-                        option_number=option_number,
-                        content_type=result.content_type,
-                        image_data=encoded,
-                        owner_id=_current_user_id(),
-                    )
+                    if owner_id:
+                        insert_room_creation(
+                            get_db(),
+                            prompt=prompt,
+                            option_number=option_number,
+                            content_type=result.content_type,
+                            image_data=encoded,
+                            owner_id=owner_id,
+                        )
                     completed += 1
                     yield f"event: image\ndata: {json.dumps({'option': option_number, 'contentType': result.content_type, 'data': encoded})}\n\n"
                 except CourseMediaError as exc:
