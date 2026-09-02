@@ -1,8 +1,9 @@
 # roomform
 
 roomform is an AI-assisted interior design studio. Upload a photo of a room,
-describe the atmosphere or changes you want, and explore three visual redesign
-directions before moving anything in the real space.
+describe the atmosphere or changes you want, and explore two visual redesign
+directions before moving anything in the real space. You can request another
+pair whenever you want more possibilities.
 
 This project was developed as a sample for UBC's **AI 100: Introduction to
 Artificial Intelligence** course.
@@ -15,9 +16,10 @@ Artificial Intelligence** course.
 3. The course language model examines the photo and turns the rough idea into a
    concise, image-ready direction.
 4. Review and edit that direction before approving it.
-5. The course image service creates three sequential variations using the
+5. The course image service creates two sequential variations using the
    original room photo and the approved direction.
-6. Download individual results or revisit them from **Creation history**.
+6. Request another pair of sequential variations if you want to keep exploring.
+7. Download individual results or revisit them from **Creation history**.
 
 The interface also includes light/dark mode, responsive layouts for mobile and
 desktop, progress feedback for long-running generation, and partial-result
@@ -95,10 +97,12 @@ API responses, or written to logs. The browser calls the app's Flask routes;
 only the server-side helpers contact the course services.
 
 Image generation is deliberately sequential because the GPU worker is shared.
-Each variation has one retry when the worker reports that it is busy. Errors
-are streamed to the UI so a user can distinguish a temporary worker failure,
-invalid credentials, or a partial result. A hosted preview may need to be
-restarted when its media credential has expired or is unavailable.
+Each request creates two variations, and the interface can request another pair
+without losing the results already shown. Each variation has one retry when the
+worker reports that it is busy. Errors are streamed to the UI so a user can
+distinguish a temporary worker failure, invalid credentials, or a partial result.
+A hosted preview may need to be restarted when its media credential has expired
+or is unavailable.
 
 ## API Endpoints
 
@@ -106,8 +110,9 @@ All endpoints respect `GIZMOAPP_URL_PREFIX` when it is configured.
 
 - `POST /api/room/refine` accepts a room image and brief, then returns a refined
   image-generation prompt.
-- `POST /api/room/generate` accepts an image and approved prompt, and streams
-  `progress`, `image`, `variation-error`, `done`, or `error` SSE events.
+- `POST /api/room/generate` accepts an image, approved prompt, and optional
+  `start_option`, then streams two sequential options through `progress`,
+  `image`, `variation-error`, `done`, or `error` SSE events.
 - `GET /api/room/history` returns saved generated creations.
 - `GET /healthz` reports process liveness.
 - `GET /readyz` checks SQLite readiness.

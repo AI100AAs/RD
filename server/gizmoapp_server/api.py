@@ -36,6 +36,7 @@ SLUG_RE = re.compile(r"^[a-z0-9-]{3,40}$")
 MAX_LABEL_LENGTH = 120
 MAX_DESCRIPTION_LENGTH = 2_000
 MAX_SEARCH_QUERY_LENGTH = 200
+MAX_ROOM_OPTION = 99
 
 
 def _health_payload() -> dict[str, Any]:
@@ -230,10 +231,17 @@ def register_api_routes(app: Flask) -> None:
     def room_generate():
         photo = request.files.get("photo")
         prompt = request.form.get("prompt", "").strip()
+        raw_start_option = request.form.get("start_option", "1").strip()
         if photo is None or not photo.filename:
             return _error_response("Choose a room photo before generating", 400)
         if not prompt or len(prompt) > 2000:
             return _error_response("prompt must be between 1 and 2,000 characters", 400)
+        try:
+            start_option = int(raw_start_option)
+        except (TypeError, ValueError):
+            return _error_response("start_option must be a whole number between 1 and 99", 400)
+        if not 1 <= start_option <= MAX_ROOM_OPTION:
+            return _error_response("start_option must be a whole number between 1 and 99", 400)
         if photo.mimetype not in {"image/jpeg", "image/png", "image/webp"}:
             return _error_response("Photo must be a PNG, JPG, or WEBP image", 400)
         image_data = photo.read()
@@ -249,7 +257,8 @@ def register_api_routes(app: Flask) -> None:
             failures: list[str] = []
             # The course GPU is shared and may reject duplicate concurrent edits.
             # Keep the stream open while each bounded request is processed.
-            for option_number, seed in enumerate((101, 202, 303), start=1):
+            for option_number in range(start_option, start_option + 2):
+                seed = option_number * 101
                 yield f"event: progress\ndata: {json.dumps({'option': option_number})}\n\n"
                 try:
                     result = None

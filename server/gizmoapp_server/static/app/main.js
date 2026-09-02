@@ -15,6 +15,8 @@ function bootstrap() {
   const refinedPrompt = document.getElementById("refined-prompt");
   const resultsSection = document.getElementById("results-section");
   const resultsGrid = document.getElementById("results-grid");
+  const resultsTitle = document.getElementById("results-title");
+  const moreButton = document.getElementById("more-button");
   const status = document.getElementById("form-status");
   const approvalStatus = document.getElementById("approval-status");
   const refineProgress = createProgress(document.getElementById("refine-progress"));
@@ -148,18 +150,18 @@ function bootstrap() {
     approvalPanel.hidden = true;
     setStatus(approvalStatus, "");
   });
-  document.getElementById("generate-button").addEventListener("click", async () => {
+  async function generateBatch(startOption, button, resetResults = false) {
     const file = photoInput.files[0];
     const prompt = refinedPrompt.value.trim();
     if (!file || !prompt) return;
-    const button = document.getElementById("generate-button");
     const body = new FormData();
     body.append("photo", file);
     body.append("prompt", prompt);
+    body.append("start_option", String(startOption));
     setBusy(button, true, "Creating directions...");
-    generateProgress.start(["Preparing your room", "Creating direction one", "Creating direction two", "Creating direction three"]);
+    generateProgress.start(["Preparing your room", `Creating directions ${startOption}-${startOption + 1}`]);
     setStatus(approvalStatus, "Rendering can take a little while. Keep this tab open.");
-    resultsGrid.innerHTML = "";
+    if (resetResults) resultsGrid.innerHTML = "";
     resultsSection.hidden = false;
     resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
     let imageCount = 0;
@@ -192,7 +194,7 @@ function bootstrap() {
             generateProgress.update(`Direction ${imageCount} ready`, Math.min(96, 20 + imageCount * 25));
             setStatus(approvalStatus, `${imageCount} direction${imageCount === 1 ? " is" : "s are"} ready. More may still be coming.`);
           } else if (event[1] === "progress") {
-            setStatus(approvalStatus, `Creating direction ${data.option} of 3...`);
+            setStatus(approvalStatus, `Creating direction ${data.option - startOption + 1} of 2...`);
           } else if (event[1] === "variation-error") {
             setStatus(approvalStatus, data.message || `${imageCount} direction${imageCount === 1 ? " is" : "s are"} ready. One variation could not be created.`, true);
           } else if (event[1] === "error") {
@@ -202,29 +204,40 @@ function bootstrap() {
         if (done) break;
       }
       if (!imageCount) throw new Error("The redesign service returned no images. Please try again.");
-      setStatus(approvalStatus, imageCount === 3 ? "Three new directions, ready to explore." : `${imageCount} direction${imageCount === 1 ? " is" : "s are"} ready to explore.`);
+      setStatus(approvalStatus, `${imageCount} new direction${imageCount === 1 ? " is" : "s are"} ready to explore.`);
       generateProgress.finish("Directions ready");
+      moreButton.hidden = false;
     } catch (error) {
       const message = error?.name === "AbortError"
         ? "This is taking longer than expected. The image worker may be busy; please try again."
         : error.message;
       setStatus(approvalStatus, message, true);
-      if (imageCount) generateProgress.finish("Partial results ready");
-      else generateProgress.fail();
+      if (imageCount) {
+        generateProgress.finish("Partial results ready");
+        moreButton.hidden = false;
+      } else generateProgress.fail();
     } finally {
       window.clearTimeout(requestTimeout);
       setBusy(button, false);
     }
+  }
+  document.getElementById("generate-button").addEventListener("click", () => {
+    generateBatch(1, document.getElementById("generate-button"), true);
   });
   function appendResult(image) {
     const option = Number(image.option) || (resultsGrid.children.length + 1);
     const source = `data:${image.contentType};base64,${image.data}`;
     resultsGrid.insertAdjacentHTML("beforeend", `<article class="result-card"><img src="${source}" alt="Room redesign option ${option}"><div class="result-label"><span>OPTION ${String(option).padStart(2, "0")}</span><a href="${source}" download="roomform-option-${option}.png">Download</a></div></article>`);
+    if (resultsGrid.children.length > 2) resultsTitle.textContent = `${resultsGrid.children.length} ways forward`;
   }
   document.getElementById("new-design-button").addEventListener("click", () => {
     resultsSection.hidden = true;
     approvalPanel.hidden = true;
+    moreButton.hidden = true;
     form.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  moreButton.addEventListener("click", () => {
+    generateBatch(resultsGrid.children.length + 1, moreButton);
   });
   runtime.markReady();
 }

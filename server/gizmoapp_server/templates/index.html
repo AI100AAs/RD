@@ -28,7 +28,7 @@
         <section class="intro">
           <p class="eyebrow">INTERIOR REIMAGINED</p>
           <h1 id="page-title">See your room<br><em>in a new light.</em></h1>
-          <p class="intro-copy">Upload a photo, describe the feeling you want, and explore three considered directions.</p>
+          <p class="intro-copy">Upload a photo, describe the feeling you want, and explore two considered directions. Want more? Ask for another pair.</p>
         </section>
 
         <section class="workflow-grid">
@@ -103,18 +103,18 @@
             <textarea id="refined-prompt" rows="8" maxlength="2000"></textarea>
             <div class="approval-actions">
               <button class="text-button" id="back-button" type="button">&lt;- Start over</button>
-              <button class="primary-button" id="generate-button" type="button">Show me three <span aria-hidden="true">-&gt;</span></button>
+              <button class="primary-button" id="generate-button" type="button">Show me two <span aria-hidden="true">-&gt;</span></button>
             </div>
             <p class="form-status" id="approval-status" role="status" aria-live="polite"></p>
             <div class="progress-wrap" id="generate-progress" hidden>
               <div class="progress-meta"><span id="generate-progress-label">Preparing</span><span id="generate-progress-percent">0%</span></div>
-              <div class="progress-track" role="progressbar" aria-label="Creating three room redesigns" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="progress-fill"></span></div>
+              <div class="progress-track" role="progressbar" aria-label="Creating two room redesigns" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="progress-fill"></span></div>
             </div>
           </section>
         </section>
 
         <section class="results-section" id="results-section" aria-labelledby="results-title" hidden>
-          <div class="results-heading"><div><p class="eyebrow">03 / YOUR POSSIBILITIES</p><h2 id="results-title">Three ways forward</h2></div><button class="text-button" id="new-design-button" type="button">Create another</button></div>
+          <div class="results-heading"><div><p class="eyebrow">03 / YOUR POSSIBILITIES</p><h2 id="results-title">Two ways forward</h2></div><div class="results-actions"><button class="text-button" id="more-button" type="button" hidden>Show me two more</button><button class="text-button" id="new-design-button" type="button">Create another</button></div></div>
           <div class="results-grid" id="results-grid"></div>
         </section>
         <footer class="site-footer">
