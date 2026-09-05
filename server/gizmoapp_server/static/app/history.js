@@ -9,7 +9,9 @@ const escapeHtml = (value) => String(value)
 try {
   const config = runtime.readConfig();
   const grid = document.getElementById("history-grid");
-  const payload = await requestJson(`${config.apiBase}/room/history`);
+  const archiveId = new URL(window.location.href).searchParams.get("history");
+  if (!archiveId) throw new Error("This history link is missing its archive identifier. Return to the studio and try again.");
+  const payload = await requestJson(`${config.apiBase}/room/history?history=${encodeURIComponent(archiveId)}`);
   if (!payload.creations.length) {
     grid.innerHTML = '<p class="history-empty">No creations yet. Your next room redesign will appear here.</p>';
   } else {

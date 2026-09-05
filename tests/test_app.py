@@ -54,7 +54,7 @@ class GizmoAppTestCase(unittest.TestCase):
         self.assertEqual(bootstrap.get_json()["app"]["shell"], "graphical")
         self.assertEqual(ready.status_code, 200)
         self.assertEqual(ready.get_json()["status"], "ready")
-        self.assertEqual(ready.get_json()["schemaVersion"], 3)
+        self.assertEqual(ready.get_json()["schemaVersion"], 4)
 
     def test_room_history_is_scoped_to_platform_user(self):
         app = self.make_app()
@@ -110,6 +110,24 @@ class GizmoAppTestCase(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["creations"], [])
+
+    def test_url_archive_identifier_survives_refresh_for_anonymous_user(self):
+        app = self.make_app()
+        client = app.test_client()
+        with app.app_context():
+            insert_room_creation(
+                get_db(),
+                prompt="url room",
+                option_number=1,
+                content_type="image/png",
+                image_data="aW1hZ2U=",
+                owner_id="",
+                history_id="abcdef12-3456-7890",
+            )
+
+        response = client.get("/api/room/history?history=abcdef12-3456-7890")
+
+        self.assertEqual(len(response.get_json()["creations"]), 1)
 
     def test_untrusted_identity_headers_cannot_select_another_history_bucket(self):
         app = self.make_app()

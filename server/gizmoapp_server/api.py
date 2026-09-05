@@ -33,6 +33,7 @@ from .media import CourseMediaError, edit_image
 
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 SLUG_RE = re.compile(r"^[a-z0-9-]{3,40}$")
+HISTORY_ID_RE = re.compile(r"^[a-f0-9-]{16,64}$")
 MAX_LABEL_LENGTH = 120
 MAX_DESCRIPTION_LENGTH = 2_000
 MAX_SEARCH_QUERY_LENGTH = 200
@@ -56,6 +57,11 @@ def _current_user_id() -> str | None:
     # instead of forwarding it as an HTTP header.
     value = request.environ.get("REMOTE_USER", "").strip()
     return value[:255] or None
+
+
+def _history_id(value: str | None) -> str | None:
+    value = (value or "").strip().lower()
+    return value if HISTORY_ID_RE.fullmatch(value) else None
 
 
 def _bootstrap_payload() -> dict[str, Any]:
@@ -238,8 +244,16 @@ def register_api_routes(app: Flask) -> None:
     @app.get(scoped_path(prefix, "api/room/history"))
     def room_history():
         owner_id = _current_user_id()
-        # Never let requests without a proxy identity share the legacy empty bucket.
-        response = jsonify({"creations": fetch_room_creations(get_db(), owner_id=owner_id) if owner_id else []})
+        history_id = _history_id(request.args.get("history"))
+        if request.args.get("history") and history_id is None:
+            return _error_response("history must be a valid archive identifier", 400)
+        if not owner_id and not history_id:
+            creations = []
+        else:
+            creations = fetch_room_creations(
+                get_db(), owner_id=owner_id or "", history_id=history_id or ""
+            )
+        response = jsonify({"creations": creations})
         response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -264,6 +278,9 @@ def register_api_routes(app: Flask) -> None:
         if not image_data or len(image_data) > 8 * 1024 * 1024:
             return _error_response("Photo must be smaller than 8 MB", 400)
         owner_id = _current_user_id()
+        history_id = _history_id(request.form.get("history"))
+        if request.form.get("history") and history_id is None:
+            return _error_response("history must be a valid archive identifier", 400)
         def events():
             def render_variation(seed: int):
                 return edit_image(
@@ -290,14 +307,15 @@ def register_api_routes(app: Flask) -> None:
                     if result is None:
                         raise CourseMediaError("The course-media worker did not return an image.")
                     encoded = base64.b64encode(result.data).decode("ascii")
-                    if owner_id:
+                    if owner_id or history_id:
                         insert_room_creation(
                             get_db(),
                             prompt=prompt,
                             option_number=option_number,
                             content_type=result.content_type,
                             image_data=encoded,
-                            owner_id=owner_id,
+                            owner_id=owner_id or "",
+                            history_id=history_id or "",
                         )
                     completed += 1
                     yield f"event: image\ndata: {json.dumps({'option': option_number, 'contentType': result.content_type, 'data': encoded})}\n\n"

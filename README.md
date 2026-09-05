@@ -113,12 +113,11 @@ All endpoints respect `GIZMOAPP_URL_PREFIX` when it is configured.
 - `POST /api/room/generate` accepts an image, approved prompt, and optional
   `start_option`, then streams two sequential options through `progress`,
   `image`, `variation-error`, `done`, or `error` SSE events.
-- `GET /api/room/history` returns saved generated creations for the current
-  platform user. The server reads the hosting proxy's canonical
-  `X-Gizmo-User-ID` header or its trusted WSGI `REMOTE_USER` equivalent, so
-  history does not depend on browser storage or cookies. Requests without that
-  trusted platform identity receive no history and their generated images are
-  not persisted, rather than sharing one anonymous history with every visitor.
+- `GET /api/room/history?history=<id>` returns saved generated creations for the
+  current URL archive. The studio adds this random identifier to the address bar
+  and sends it with generated images, so history survives refreshes without
+  browser storage or cookies. When a trusted platform identity is available, it
+  is also part of the scope so users cannot read each other's history.
 - `GET /healthz` reports process liveness.
 - `GET /readyz` checks SQLite readiness.
 - `GET /api/bootstrap` returns app metadata and runtime information.

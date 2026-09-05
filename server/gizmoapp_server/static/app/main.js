@@ -7,6 +7,16 @@ function bootstrap() {
     throw new Error("The shared app runtime did not load.");
   }
   const config = runtime.readConfig();
+  const currentUrl = new URL(window.location.href);
+  const requestedArchiveId = currentUrl.searchParams.get("history") || "";
+  const archiveId = /^[a-f0-9-]{16,64}$/.test(requestedArchiveId) ? requestedArchiveId : crypto.randomUUID();
+  currentUrl.searchParams.set("history", archiveId);
+  window.history.replaceState({}, "", currentUrl);
+  document.querySelectorAll("a.history-link").forEach((link) => {
+    const target = new URL(link.href, window.location.href);
+    target.searchParams.set("history", archiveId);
+    link.href = target.href;
+  });
   const form = document.getElementById("design-form");
   const photoInput = document.getElementById("room-photo");
   const photoPreview = document.getElementById("photo-preview");
@@ -158,6 +168,7 @@ function bootstrap() {
     body.append("photo", file);
     body.append("prompt", prompt);
     body.append("start_option", String(startOption));
+    body.append("history", archiveId);
     setBusy(button, true, "Creating directions...");
     generateProgress.start(["Preparing your room", `Creating directions ${startOption}-${startOption + 1}`]);
     setStatus(approvalStatus, "Rendering can take a little while. Keep this tab open.");
@@ -232,7 +243,7 @@ function bootstrap() {
   }
   async function restoreSavedResults() {
     try {
-      const payload = await requestJson(`${config.apiBase}/room/history`);
+      const payload = await requestJson(`${config.apiBase}/room/history?history=${encodeURIComponent(archiveId)}`);
       if (!payload.creations?.length) return;
       resultsGrid.innerHTML = "";
       [...payload.creations].reverse().forEach((creation) => appendResult({
