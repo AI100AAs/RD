@@ -48,11 +48,14 @@ def _health_payload() -> dict[str, Any]:
 
 
 def _current_user_id() -> str | None:
-    """Use only the identity header assigned by the hosting proxy."""
+    """Use only identity values assigned by the hosting proxy."""
     value = request.headers.get(PLATFORM_USER_ID_HEADER, "").strip()
     if value:
         return value[:255]
-    return None
+    # Some WSGI deployments expose the same trusted identity as REMOTE_USER
+    # instead of forwarding it as an HTTP header.
+    value = request.environ.get("REMOTE_USER", "").strip()
+    return value[:255] or None
 
 
 def _bootstrap_payload() -> dict[str, Any]:
