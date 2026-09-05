@@ -230,6 +230,23 @@ function bootstrap() {
     resultsGrid.insertAdjacentHTML("beforeend", `<article class="result-card"><img src="${source}" alt="Room redesign option ${option}"><div class="result-label"><span>OPTION ${String(option).padStart(2, "0")}</span><a href="${source}" download="roomform-option-${option}.png">Download</a></div></article>`);
     if (resultsGrid.children.length > 2) resultsTitle.textContent = `${resultsGrid.children.length} ways forward`;
   }
+  async function restoreSavedResults() {
+    try {
+      const payload = await requestJson(`${config.apiBase}/room/history`);
+      if (!payload.creations?.length) return;
+      resultsGrid.innerHTML = "";
+      [...payload.creations].reverse().forEach((creation) => appendResult({
+        option: creation.option_number,
+        contentType: creation.content_type,
+        data: creation.image_data,
+      }));
+      resultsTitle.textContent = `${resultsGrid.children.length} saved possibilities`;
+      resultsSection.hidden = false;
+      setStatus(approvalStatus, "Your saved directions are back.");
+    } catch {
+      // The studio remains usable if history is unavailable.
+    }
+  }
   document.getElementById("new-design-button").addEventListener("click", () => {
     resultsSection.hidden = true;
     approvalPanel.hidden = true;
@@ -240,6 +257,7 @@ function bootstrap() {
     generateBatch(resultsGrid.children.length + 1, moreButton);
   });
   runtime.markReady();
+  restoreSavedResults();
 }
 
 
