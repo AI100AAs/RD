@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -55,6 +56,32 @@ class GizmoAppTestCase(unittest.TestCase):
         self.assertEqual(ready.status_code, 200)
         self.assertEqual(ready.get_json()["status"], "ready")
         self.assertEqual(ready.get_json()["schemaVersion"], 4)
+
+    def test_graphical_pages_assign_and_reuse_archive_identifier(self):
+        app = self.make_app("/roomform")
+        client = app.test_client()
+
+        first_visit = client.get("/roomform/")
+
+        self.assertEqual(first_visit.status_code, 200)
+        html = first_visit.get_data(as_text=True)
+        history_link = re.search(r"history\?history=([a-f0-9-]+)", html)
+        self.assertIsNotNone(history_link)
+        history_id = history_link.group(1)
+        self.assertRegex(history_id, r"^[a-f0-9-]{16,64}$")
+
+        studio = client.get(f"/roomform/?history={history_id}")
+        history = client.get(f"/roomform/history?history={history_id}")
+        refreshed_history = client.get(f"/roomform/history?history={history_id}")
+        direct_history = client.get("/roomform/history")
+
+        self.assertEqual(studio.status_code, 200)
+        self.assertIn(f"history?history={history_id}", studio.get_data(as_text=True))
+        self.assertEqual(history.status_code, 200)
+        self.assertEqual(refreshed_history.status_code, 200)
+        self.assertIn(f"?history={history_id}", history.get_data(as_text=True))
+        self.assertEqual(direct_history.status_code, 302)
+        self.assertIn("history=", direct_history.headers["Location"])
 
     def test_room_history_is_scoped_to_platform_user(self):
         app = self.make_app()

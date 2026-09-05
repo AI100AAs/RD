@@ -114,10 +114,11 @@ All endpoints respect `GIZMOAPP_URL_PREFIX` when it is configured.
   `start_option`, then streams two sequential options through `progress`,
   `image`, `variation-error`, `done`, or `error` SSE events.
 - `GET /api/room/history?history=<id>` returns saved generated creations for the
-  current URL archive. The studio adds this random identifier to the address bar
-  and sends it with generated images, so history survives refreshes without
-  browser storage or cookies. When a trusted platform identity is available, it
-  is also part of the scope so users cannot read each other's history.
+  current URL archive. The server assigns the studio a random identifier and
+  the page carries it in its studio/history links and generated-image requests,
+  so history survives refreshes without browser storage or cookies. When a
+  trusted platform identity is available, it is also part of the scope so users
+  cannot read each other's history.
 - `GET /healthz` reports process liveness.
 - `GET /readyz` checks SQLite readiness.
 - `GET /api/bootstrap` returns app metadata and runtime information.

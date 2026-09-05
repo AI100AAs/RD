@@ -30,10 +30,10 @@ from .db import (
 )
 from .llm import CourseLLMError, ask_with_image
 from .media import CourseMediaError, edit_image
+from .history import normalize_history_id
 
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 SLUG_RE = re.compile(r"^[a-z0-9-]{3,40}$")
-HISTORY_ID_RE = re.compile(r"^[a-f0-9-]{16,64}$")
 MAX_LABEL_LENGTH = 120
 MAX_DESCRIPTION_LENGTH = 2_000
 MAX_SEARCH_QUERY_LENGTH = 200
@@ -57,11 +57,6 @@ def _current_user_id() -> str | None:
     # instead of forwarding it as an HTTP header.
     value = request.environ.get("REMOTE_USER", "").strip()
     return value[:255] or None
-
-
-def _history_id(value: str | None) -> str | None:
-    value = (value or "").strip().lower()
-    return value if HISTORY_ID_RE.fullmatch(value) else None
 
 
 def _bootstrap_payload() -> dict[str, Any]:
@@ -244,7 +239,7 @@ def register_api_routes(app: Flask) -> None:
     @app.get(scoped_path(prefix, "api/room/history"))
     def room_history():
         owner_id = _current_user_id()
-        history_id = _history_id(request.args.get("history"))
+        history_id = normalize_history_id(request.args.get("history"))
         if request.args.get("history") and history_id is None:
             return _error_response("history must be a valid archive identifier", 400)
         if not owner_id and not history_id:
@@ -278,7 +273,7 @@ def register_api_routes(app: Flask) -> None:
         if not image_data or len(image_data) > 8 * 1024 * 1024:
             return _error_response("Photo must be smaller than 8 MB", 400)
         owner_id = _current_user_id()
-        history_id = _history_id(request.form.get("history"))
+        history_id = normalize_history_id(request.form.get("history"))
         if request.form.get("history") and history_id is None:
             return _error_response("history must be a valid archive identifier", 400)
         def events():

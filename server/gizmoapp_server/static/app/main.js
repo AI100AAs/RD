@@ -9,7 +9,9 @@ function bootstrap() {
   const config = runtime.readConfig();
   const currentUrl = new URL(window.location.href);
   const requestedArchiveId = currentUrl.searchParams.get("history") || "";
-  const archiveId = /^[a-f0-9-]{16,64}$/.test(requestedArchiveId) ? requestedArchiveId : crypto.randomUUID();
+  const archiveId = /^[a-f0-9-]{16,64}$/.test(requestedArchiveId)
+    ? requestedArchiveId
+    : config.historyId || crypto.randomUUID();
   currentUrl.searchParams.set("history", archiveId);
   window.history.replaceState({}, "", currentUrl);
   document.querySelectorAll("a.history-link").forEach((link) => {

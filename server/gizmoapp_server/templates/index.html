@@ -14,10 +14,10 @@
   <body class="shell-body graphical-body">
     <div class="app-frame public-frame graphical-frame">
       <header class="app-header">
-          <a class="wordmark" href="{{ base_href }}" aria-label="Roomform home"><span class="wordmark-dot"></span>roomform</a>
+          <a class="wordmark" href="{{ base_href }}?history={{ history_id }}" aria-label="Roomform home"><span class="wordmark-dot"></span>roomform</a>
           <div class="header-tools">
             <span class="header-note">A clearer room, before you move a thing.</span>
-            <a class="history-link" href="{{ base_href }}history">History</a>
+            <a class="history-link" href="{{ base_href }}history?history={{ history_id }}">History</a>
           <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
             <span class="theme-toggle-icon" aria-hidden="true"></span>
             <span class="theme-toggle-label">Dark mode</span>
