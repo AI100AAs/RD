@@ -114,9 +114,9 @@ All endpoints respect `GIZMOAPP_URL_PREFIX` when it is configured.
   `start_option`, then streams two sequential options through `progress`,
   `image`, `variation-error`, `done`, or `error` SSE events.
 - `GET /api/room/history` returns saved generated creations for the current
-  platform user. The server reads the hosting proxy's `X-Gizmo-User-ID` (or
-  compatible user identity header), so history does not depend on browser
-  storage or cookies. Requests without a platform identity receive no history
+  platform user. The server reads only the hosting proxy's canonical
+  `X-Gizmo-User-ID` header, so history does not depend on browser storage or
+  cookies. Requests without that trusted platform identity receive no history
   and their generated images are not persisted, rather than sharing one
   anonymous history with every visitor.
 - `GET /healthz` reports process liveness.

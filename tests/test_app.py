@@ -93,6 +93,24 @@ class GizmoAppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["creations"], [])
 
+    def test_untrusted_identity_headers_cannot_select_another_history_bucket(self):
+        app = self.make_app()
+        client = app.test_client()
+        with app.app_context():
+            insert_room_creation(
+                get_db(),
+                prompt="private room",
+                option_number=1,
+                content_type="image/png",
+                image_data="aW1hZ2U=",
+                owner_id="alice",
+            )
+
+        response = client.get("/api/room/history", headers={"X-User-ID": "alice"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["creations"], [])
+
     def test_optional_routes_are_disabled_by_default(self):
         app = self.make_app(enabled_features=frozenset())
         client = app.test_client()

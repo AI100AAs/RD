@@ -37,7 +37,7 @@ MAX_LABEL_LENGTH = 120
 MAX_DESCRIPTION_LENGTH = 2_000
 MAX_SEARCH_QUERY_LENGTH = 200
 MAX_ROOM_OPTION = 99
-USER_ID_HEADERS = ("X-Gizmo-User-ID", "X-User-ID", "X-Forwarded-User")
+PLATFORM_USER_ID_HEADER = "X-Gizmo-User-ID"
 
 
 def _health_payload() -> dict[str, Any]:
@@ -48,13 +48,11 @@ def _health_payload() -> dict[str, Any]:
 
 
 def _current_user_id() -> str | None:
-    """Use the identity supplied by the hosting proxy, never browser state."""
-    for header in USER_ID_HEADERS:
-        value = request.headers.get(header, "").strip()
-        if value:
-            return value[:255]
-    remote_user = request.environ.get("REMOTE_USER", "").strip()
-    return remote_user[:255] or None
+    """Use only the identity header assigned by the hosting proxy."""
+    value = request.headers.get(PLATFORM_USER_ID_HEADER, "").strip()
+    if value:
+        return value[:255]
+    return None
 
 
 def _bootstrap_payload() -> dict[str, Any]:
